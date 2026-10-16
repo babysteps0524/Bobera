@@ -1,0 +1,501 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+
+<AppLayout title="광고 물품 관리" currentPath="/products">
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">광고 물품 관리</h1>
+      <p class="text-sm text-gray-500 mt-1">광고 물품을 등록·조회·수정·삭제할 수 있습니다.</p>
+    </div>
+    <button
+      id="add-product-btn"
+      class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+    >
+      <i class="i-ph:plus text-sm"></i>
+      <span>물품 추가</span>
+    </button>
+  </div>
+
+  <!-- 검색 및 필터 -->
+  <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">물품명 검색</label>
+        <input
+          id="search-keyword"
+          type="text"
+          placeholder="물품명을 입력하세요"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">물품 분류</label>
+        <input
+          id="search-category"
+          type="text"
+          placeholder="분류를 입력하세요"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">사용 여부</label>
+        <select
+          id="search-is-active"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+        >
+          <option value="">전체</option>
+          <option value="true">사용 중</option>
+          <option value="false">미사용</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button
+          id="reset-filter-btn"
+          class="px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          초기화
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 요약 카드 -->
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <p class="text-xs font-semibold text-gray-400 uppercase">총 등록 물품</p>
+      <p id="total-products" class="text-2xl font-bold text-gray-900 mt-1">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <p class="text-xs font-semibold text-gray-400 uppercase">사용 중인 물품</p>
+      <p id="active-products" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <p class="text-xs font-semibold text-gray-400 uppercase">미사용 물품</p>
+      <p id="inactive-products" class="text-2xl font-bold text-gray-400 mt-1">0</p>
+    </div>
+  </div>
+
+  <!-- 물품 목록 -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+      <h2 class="text-lg font-bold text-gray-900">물품 목록</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-gray-200">
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">물품명</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">분류</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">규격</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">단위</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">사용 여부</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">수정일</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">작업</th>
+          </tr>
+        </thead>
+        <tbody id="products-table-body">
+          <!-- 데이터는 JavaScript로 동적 렌더링 -->
+        </tbody>
+      </table>
+    </div>
+    <div id="empty-state" class="p-8 text-center text-gray-400 hidden">
+      <p class="text-sm">등록된 광고 물품이 없습니다.</p>
+    </div>
+  </div>
+
+  <!-- 물품 추가/수정 모달 -->
+  <div
+    id="product-modal"
+    class="fixed inset-0 z-50 hidden"
+    aria-hidden="true"
+  >
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" onclick="closeProductModal()"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <h3 id="modal-title" class="text-lg font-bold text-gray-900">물품 추가</h3>
+        <button
+          id="close-modal-btn"
+          class="p-2 rounded hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+          onclick="closeProductModal()"
+          aria-label="모달 닫기"
+        >
+          <i class="i-ph:x text-lg"></i>
+        </button>
+      </div>
+      <form id="product-form" class="space-y-4">
+        <input type="hidden" id="product-id" />
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">물품명 <span class="text-red-500">*</span></label>
+          <input
+            id="input-name"
+            type="text"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
+          <p id="error-name" class="text-xs text-red-600 mt-1 hidden"></p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">물품 분류 <span class="text-red-500">*</span></label>
+          <input
+            id="input-category"
+            type="text"
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
+          <p id="error-category" class="text-xs text-red-600 mt-1 hidden"></p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">규격</label>
+            <input
+              id="input-spec"
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">단위</label>
+            <input
+              id="input-unit"
+              type="text"
+              value="개"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">설명 및 비고</label>
+          <textarea
+            id="input-description"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          ></textarea>
+        </div>
+        <div class="flex items-center gap-2">
+          <input
+            id="input-is-active"
+            type="checkbox"
+            checked
+            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <label class="text-sm text-gray-700">사용 중</label>
+        </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <button
+            type="button"
+            class="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            onclick="closeProductModal()"
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+          >
+            저장
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 삭제 확인 모달 -->
+  <div
+    id="delete-confirm-modal"
+    class="fixed inset-0 z-50 hidden"
+    aria-hidden="true"
+  >
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+      <h3 class="text-lg font-bold text-gray-900 mb-2">물품 삭제 확인</h3>
+      <p class="text-sm text-gray-600 mb-4">
+        '<span id="delete-product-name" class="font-medium text-gray-900"></span>' 물품을 삭제하시겠습니까?
+      </p>
+      <p id="delete-product-warning" class="text-xs text-orange-600 mb-6 hidden">
+        이 물품은 납품 내역에 연결되어 있습니다. 삭제하면 관련 데이터에 영향을 줄 수 있습니다.
+      </p>
+      <div class="flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          onclick="closeDeleteModal()"
+        >
+          취소
+        </button>
+        <button
+          id="confirm-delete-btn"
+          type="button"
+          class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+        >
+          삭제
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // @ts-nocheck
+    import { ProductRepository } from '../../services/repositories/index.js';
+    import { formatDate } from '../../lib/utils/index.js';
+
+    const repo = new ProductRepository();
+    let products = [];
+    let editingId = null;
+    let deleteTargetId = null;
+
+    const elements = {
+      tableBody: document.getElementById('products-table-body'),
+      emptyState: document.getElementById('empty-state'),
+      modal: document.getElementById('product-modal'),
+      addBtn: document.getElementById('add-product-btn'),
+      closeBtn: document.getElementById('close-modal-btn'),
+      form: document.getElementById('product-form'),
+      title: document.getElementById('modal-title'),
+      idInput: document.getElementById('product-id'),
+      nameInput: document.getElementById('input-name'),
+      categoryInput: document.getElementById('input-category'),
+      specInput: document.getElementById('input-spec'),
+      unitInput: document.getElementById('input-unit'),
+      descInput: document.getElementById('input-description'),
+      isActiveInput: document.getElementById('input-is-active'),
+      searchKeyword: document.getElementById('search-keyword'),
+      searchCategory: document.getElementById('search-category'),
+      searchIsActive: document.getElementById('search-is-active'),
+      resetFilter: document.getElementById('reset-filter-btn'),
+      totalCount: document.getElementById('total-products'),
+      activeCount: document.getElementById('active-products'),
+      inactiveCount: document.getElementById('inactive-products'),
+      deleteModal: document.getElementById('delete-confirm-modal'),
+      deleteName: document.getElementById('delete-product-name'),
+      deleteWarning: document.getElementById('delete-product-warning'),
+      confirmDelete: document.getElementById('confirm-delete-btn'),
+    };
+
+    function loadProducts() {
+      products = repo.getAll();
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const keyword = elements.searchKeyword.value.toLowerCase();
+      const category = elements.searchCategory.value.toLowerCase();
+      const isActive = elements.searchIsActive.value;
+
+      const filtered = products.filter((p) => {
+        const matchKeyword = p.name.toLowerCase().includes(keyword);
+        const matchCategory = p.category.toLowerCase().includes(category);
+        const matchActive = isActive === '' || p.isActive === (isActive === 'true');
+        return matchKeyword && matchCategory && matchActive;
+      });
+
+      elements.tableBody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        elements.emptyState.classList.remove('hidden');
+        elements.tableBody.parentElement.parentElement.classList.add('hidden');
+      } else {
+        elements.emptyState.classList.add('hidden');
+        elements.tableBody.parentElement.parentElement.classList.remove('hidden');
+
+        filtered.forEach((p) => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
+          tr.innerHTML = `
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(p.name)}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">${escapeHtml(p.category)}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">${escapeHtml(p.spec || '-')}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">${escapeHtml(p.unit)}</td>
+            <td class="px-6 py-4 text-sm text-center">
+              <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                p.isActive
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-500'
+              }">
+                ${p.isActive ? '사용 중' : '미사용'}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600 text-right">${formatDate(p.updatedAt)}</td>
+            <td class="px-6 py-4 text-sm text-center">
+              <button onclick="editProduct('${p.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium" title="수정">
+                수정
+              </button>
+              <button onclick="prepareDelete('${p.id}', '${escapeHtml(p.name)}', '${p.isActive}')" class="text-red-600 hover:text-red-800 text-sm font-medium ml-4" title="삭제">
+                삭제
+              </button>
+            </td>
+          `;
+          elements.tableBody.appendChild(tr);
+        });
+      }
+
+      // 요약 카드 업데이트
+      elements.totalCount.textContent = products.length;
+      elements.activeCount.textContent = products.filter((p) => p.isActive).length;
+      elements.inactiveCount.textContent = products.filter((p) => !p.isActive).length;
+    }
+
+    function openAddModal() {
+      editingId = null;
+      elements.title.textContent = '물품 추가';
+      elements.form.reset();
+      elements.isActiveInput.checked = true;
+      elements.nameInput.value = '';
+      elements.categoryInput.value = '';
+      elements.specInput.value = '';
+      elements.unitInput.value = '개';
+      elements.descInput.value = '';
+      clearErrors();
+      elements.modal.classList.remove('hidden');
+      elements.modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function editProduct(id) {
+      const p = products.find((x) => x.id === id);
+      if (!p) return;
+      editingId = id;
+      elements.title.textContent = '물품 수정';
+      elements.idInput.value = p.id;
+      elements.nameInput.value = p.name;
+      elements.categoryInput.value = p.category;
+      elements.specInput.value = p.spec || '';
+      elements.unitInput.value = p.unit;
+      elements.descInput.value = p.description || '';
+      elements.isActiveInput.checked = p.isActive;
+      clearErrors();
+      elements.modal.classList.remove('hidden');
+      elements.modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeProductModal() {
+      elements.modal.classList.add('hidden');
+      elements.modal.setAttribute('aria-hidden', 'true');
+      editingId = null;
+      clearErrors();
+    }
+
+    function clearErrors() {
+      ['name', 'category'].forEach((f) => {
+        const el = document.getElementById('error-' + f);
+        if (el) el.classList.add('hidden');
+      });
+    }
+
+    function prepareDelete(id, name, isActive) {
+      deleteTargetId = id;
+      elements.deleteName.textContent = name;
+      if (isActive === 'true') {
+        elements.deleteWarning.classList.remove('hidden');
+      } else {
+        elements.deleteWarning.classList.add('hidden');
+      }
+      elements.deleteModal.classList.remove('hidden');
+      elements.deleteModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeDeleteModal() {
+      elements.deleteModal.classList.add('hidden');
+      elements.deleteModal.setAttribute('aria-hidden', 'true');
+      deleteTargetId = null;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 이벤트 리스너
+    elements.addBtn.addEventListener('click', openAddModal);
+    elements.closeBtn.addEventListener('click', closeProductModal);
+    elements.resetFilter.addEventListener('click', () => {
+      elements.searchKeyword.value = '';
+      elements.searchCategory.value = '';
+      elements.searchIsActive.value = '';
+      renderProducts();
+    });
+
+    elements.form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const name = elements.nameInput.value.trim();
+      const category = elements.categoryInput.value.trim();
+      const spec = elements.specInput.value.trim();
+      const unit = elements.unitInput.value.trim() || '개';
+      const description = elements.descInput.value.trim();
+      const isActive = elements.isActiveInput.checked;
+
+      let hasError = false;
+      if (!name) {
+        showError('name', '물품명을 입력해주세요.');
+        hasError = true;
+      }
+      if (!category) {
+        showError('category', '물품 분류를 입력해주세요.');
+        hasError = true;
+      }
+      if (hasError) return;
+
+      const now = new Date().toISOString();
+      const productData = {
+        name,
+        category,
+        spec,
+        unit,
+        description,
+        isActive,
+      };
+
+      if (editingId) {
+        repo.update(editingId, { ...productData, updatedAt: now });
+      } else {
+        // 중복 확인 (같은 이름 + 분류)
+        const exists = products.some(
+          (p) => p.name.toLowerCase() === name.toLowerCase() && p.category.toLowerCase() === category.toLowerCase()
+        );
+        if (exists) {
+          if (!confirm('동일한 이름과 분류의 물품이 이미 등록되어 있습니다. 계속 추가하시겠습니까?')) {
+            return;
+          }
+        }
+        repo.create(productData);
+      }
+
+      closeProductModal();
+      loadProducts();
+    });
+
+    elements.confirmDelete.addEventListener('click', () => {
+      if (deleteTargetId) {
+        repo.delete(deleteTargetId);
+        closeDeleteModal();
+        loadProducts();
+      }
+    });
+
+    // 모달 외부 클릭 시 닫기
+    elements.modal.addEventListener('click', (e) => {
+      if (e.target === elements.modal) closeProductModal();
+    });
+    elements.deleteModal.addEventListener('click', (e) => {
+      if (e.target === elements.deleteModal) closeDeleteModal();
+    });
+
+    function showError(field, message) {
+      const el = document.getElementById('error-' + field);
+      if (el) {
+        el.textContent = message;
+        el.classList.remove('hidden');
+      }
+    }
+
+    // 전역 함수 (HTML onclick에서 호출)
+    window.editProduct = editProduct;
+    window.prepareDelete = prepareDelete;
+
+    // 초기 로드
+    loadProducts();
+  </script>
+</AppLayout>

@@ -1,0 +1,432 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+
+<AppLayout title="납품 차수 관리" currentPath="/rounds">
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">납품 차수 관리</h1>
+      <p class="text-sm text-gray-500 mt-1">납품 차수를 등록·조회·수정·삭제할 수 있습니다.</p>
+    </div>
+    <button
+      id="add-round-btn"
+      class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+    >
+      <i class="i-ph:plus text-sm"></i>
+      <span>차수 추가</span>
+    </button>
+  </div>
+
+  <!-- 검색 및 필터 -->
+  <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">차수명 검색</label>
+        <input
+          id="search-keyword"
+          type="text"
+          placeholder="차수명을 입력하세요"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">상태</label>
+        <select
+          id="search-status"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+        >
+          <option value="">전체</option>
+          <option value="preparing">준비 중</option>
+          <option value="in_progress">진행 중</option>
+          <option value="completed">완료</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button
+          id="reset-filter-btn"
+          class="px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          초기화
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 요약 카드 -->
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3 mb-6">
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <p class="text-xs font-semibold text-gray-400 uppercase">총 차수</p>
+      <p id="total-rounds" class="text-2xl font-bold text-gray-900 mt-1">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <p class="text-xs font-semibold text-gray-400 uppercase">진행 중인 차수</p>
+      <p id="active-rounds" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <p class="text-xs font-semibold text-gray-400 uppercase">완료된 차수</p>
+      <p id="completed-rounds" class="text-2xl font-bold text-green-600 mt-1">0</p>
+    </div>
+  </div>
+
+  <!-- 차수 목록 -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+      <h2 class="text-lg font-bold text-gray-900">차수 목록</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="border-b border-gray-200">
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">차수명</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">납품 기간</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">상태</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">설명</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">수정일</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">작업</th>
+          </tr>
+        </thead>
+        <tbody id="rounds-table-body"></tbody>
+      </table>
+    </div>
+    <div id="empty-state" class="p-8 text-center text-gray-400 hidden">
+      <p class="text-sm">등록된 납품 차수가 없습니다.</p>
+    </div>
+  </div>
+
+  <!-- 차수 추가/수정 모달 -->
+  <div
+    id="round-modal"
+    class="fixed inset-0 z-50 hidden"
+    aria-hidden="true"
+  >
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" onclick="closeRoundModal()"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <h3 id="round-modal-title" class="text-lg font-bold text-gray-900">차수 추가</h3>
+        <button
+          id="close-round-modal-btn"
+          class="p-2 rounded hover:bg-gray-100 text-gray-600 hover:text-gray-900"
+          onclick="closeRoundModal()"
+          aria-label="모달 닫기"
+        >
+          <i class="i-ph:x text-lg"></i>
+        </button>
+      </div>
+      <form id="round-form" class="space-y-4">
+        <input type="hidden" id="round-id" />
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">차수명 또는 차수 번호 <span class="text-red-500">*</span></label>
+          <input
+            id="input-round-name"
+            type="text"
+            required
+            placeholder="예: 1차, 2026년 1분기"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
+          <p id="error-round-name" class="text-xs text-red-600 mt-1 hidden"></p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">납품 기간 또는 기준일</label>
+            <input
+              id="input-round-period"
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">상태</label>
+            <select
+              id="input-round-status"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
+            >
+              <option value="preparing">준비 중</option>
+              <option value="in_progress">진행 중</option>
+              <option value="completed">완료</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">설명 및 비고</label>
+          <textarea
+            id="input-round-description"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          ></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <button
+            type="button"
+            class="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            onclick="closeRoundModal()"
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+          >
+            저장
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 삭제 확인 모달 -->
+  <div
+    id="round-delete-modal"
+    class="fixed inset-0 z-50 hidden"
+    aria-hidden="true"
+  >
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" onclick="closeRoundDeleteModal()"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+      <h3 class="text-lg font-bold text-gray-900 mb-2">차수 삭제 확인</h3>
+      <p class="text-sm text-gray-600 mb-2">
+        '<span id="round-delete-name" class="font-medium text-gray-900"></span>' 차수를 삭제하시겠습니까?
+      </p>
+      <p id="round-delete-warning" class="text-xs text-orange-600 mb-6 hidden">
+        이 차수에 연결된 납품 내역이 있습니다. 삭제하면 관련 데이터에 영향을 줄 수 있습니다.
+      </p>
+      <div class="flex justify-end gap-2">
+        <button
+          type="button"
+          class="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          onclick="closeRoundDeleteModal()"
+        >
+          취소
+        </button>
+        <button
+          id="confirm-round-delete-btn"
+          type="button"
+          class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+        >
+          삭제
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // @ts-nocheck
+    import { DeliveryRoundRepository } from '../../services/repositories/index.js';
+    import { formatDate } from '../../lib/utils/index.js';
+
+    const repo = new DeliveryRoundRepository();
+    let rounds = [];
+    let editingId = null;
+    let deleteTargetId = null;
+
+    const statusLabels = {
+      preparing: '준비 중',
+      in_progress: '진행 중',
+      completed: '완료',
+    };
+    const statusColors = {
+      preparing: 'bg-gray-100 text-gray-600',
+      in_progress: 'bg-blue-100 text-blue-700',
+      completed: 'bg-green-100 text-green-700',
+    };
+
+    const elements = {
+      tableBody: document.getElementById('rounds-table-body'),
+      emptyState: document.getElementById('empty-state'),
+      modal: document.getElementById('round-modal'),
+      addBtn: document.getElementById('add-round-btn'),
+      closeBtn: document.getElementById('close-round-modal-btn'),
+      form: document.getElementById('round-form'),
+      title: document.getElementById('round-modal-title'),
+      idInput: document.getElementById('round-id'),
+      nameInput: document.getElementById('input-round-name'),
+      periodInput: document.getElementById('input-round-period'),
+      statusInput: document.getElementById('input-round-status'),
+      descriptionInput: document.getElementById('input-round-description'),
+      searchKeyword: document.getElementById('search-keyword'),
+      searchStatus: document.getElementById('search-status'),
+      resetFilter: document.getElementById('reset-filter-btn'),
+      totalCount: document.getElementById('total-rounds'),
+      activeCount: document.getElementById('active-rounds'),
+      completedCount: document.getElementById('completed-rounds'),
+      deleteModal: document.getElementById('round-delete-modal'),
+      deleteName: document.getElementById('round-delete-name'),
+      deleteWarning: document.getElementById('round-delete-warning'),
+      confirmDelete: document.getElementById('confirm-round-delete-btn'),
+    };
+
+    function loadRounds() {
+      rounds = repo.getAll();
+      renderRounds();
+    }
+
+    function renderRounds() {
+      const keyword = elements.searchKeyword.value.toLowerCase();
+      const status = elements.searchStatus.value;
+
+      const filtered = rounds.filter((r) => {
+        const matchKeyword = r.name.toLowerCase().includes(keyword);
+        const matchStatus = status === '' || r.status === status;
+        return matchKeyword && matchStatus;
+      });
+
+      elements.tableBody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        elements.emptyState.classList.remove('hidden');
+        elements.tableBody.parentElement.parentElement.classList.add('hidden');
+      } else {
+        elements.emptyState.classList.add('hidden');
+        elements.tableBody.parentElement.parentElement.classList.remove('hidden');
+
+        filtered.forEach((r) => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
+          tr.innerHTML = `
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(r.name)}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">${escapeHtml(r.period || '-')}</td>
+            <td class="px-6 py-4 text-sm text-center">
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusColors[r.status] || 'bg-gray-100 text-gray-500'}">
+                ${statusLabels[r.status] || r.status}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600">${escapeHtml(r.description || '-')}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 text-right">${formatDate(r.updatedAt)}</td>
+            <td class="px-6 py-4 text-sm text-center">
+              <button onclick="editRound('${r.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium" title="수정">
+                수정
+              </button>
+              <button onclick="prepareDeleteRound('${r.id}', '${escapeHtml(r.name)}')" class="text-red-600 hover:text-red-800 text-sm font-medium ml-4" title="삭제">
+                삭제
+              </button>
+            </td>
+          `;
+          elements.tableBody.appendChild(tr);
+        });
+      }
+
+      elements.totalCount.textContent = rounds.length;
+      elements.activeCount.textContent = rounds.filter((r) => r.status === 'in_progress').length;
+      elements.completedCount.textContent = rounds.filter((r) => r.status === 'completed').length;
+    }
+
+    function openAddModal() {
+      editingId = null;
+      elements.title.textContent = '차수 추가';
+      elements.form.reset();
+      elements.statusInput.value = 'preparing';
+      clearErrors();
+      elements.modal.classList.remove('hidden');
+      elements.modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function editRound(id) {
+      const r = rounds.find((x) => x.id === id);
+      if (!r) return;
+      editingId = id;
+      elements.title.textContent = '차수 수정';
+      elements.idInput.value = r.id;
+      elements.nameInput.value = r.name;
+      elements.periodInput.value = r.period || '';
+      elements.statusInput.value = r.status;
+      elements.descriptionInput.value = r.description || '';
+      clearErrors();
+      elements.modal.classList.remove('hidden');
+      elements.modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeRoundModal() {
+      elements.modal.classList.add('hidden');
+      elements.modal.setAttribute('aria-hidden', 'true');
+      editingId = null;
+      clearErrors();
+    }
+
+    function clearErrors() {
+      const el = document.getElementById('error-round-name');
+      if (el) el.classList.add('hidden');
+    }
+
+    function showError(field, message) {
+      const el = document.getElementById('error-' + field);
+      if (el) {
+        el.textContent = message;
+        el.classList.remove('hidden');
+      }
+    }
+
+    function prepareDeleteRound(id, name) {
+      deleteTargetId = id;
+      elements.deleteName.textContent = name;
+      elements.deleteModal.classList.remove('hidden');
+      elements.deleteModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeRoundDeleteModal() {
+      elements.deleteModal.classList.add('hidden');
+      elements.deleteModal.setAttribute('aria-hidden', 'true');
+      deleteTargetId = null;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 이벤트 리스너
+    elements.addBtn.addEventListener('click', openAddModal);
+    elements.closeBtn.addEventListener('click', closeRoundModal);
+    elements.resetFilter.addEventListener('click', () => {
+      elements.searchKeyword.value = '';
+      elements.searchStatus.value = '';
+      renderRounds();
+    });
+
+    elements.form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const name = elements.nameInput.value.trim();
+      const period = elements.periodInput.value.trim();
+      const status = elements.statusInput.value;
+      const description = elements.descriptionInput.value.trim();
+
+      if (!name) {
+        showError('round-name', '차수명을 입력해주세요.');
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const roundData = { name, period, status, description };
+
+      if (editingId) {
+        repo.update(editingId, { ...roundData, updatedAt: now });
+      } else {
+        repo.create(roundData);
+      }
+
+      closeRoundModal();
+      loadRounds();
+    });
+
+    elements.confirmDelete.addEventListener('click', () => {
+      if (deleteTargetId) {
+        repo.delete(deleteTargetId);
+        closeRoundDeleteModal();
+        loadRounds();
+      }
+    });
+
+    elements.modal.addEventListener('click', (e) => {
+      if (e.target === elements.modal) closeRoundModal();
+    });
+    elements.deleteModal.addEventListener('click', (e) => {
+      if (e.target === elements.deleteModal) closeRoundDeleteModal();
+    });
+
+    window.editRound = editRound;
+    window.prepareDeleteRound = prepareDeleteRound;
+
+    loadRounds();
+  </script>
+</AppLayout>

@@ -1,0 +1,452 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+
+<AppLayout title="통계 및 보고서" currentPath="/reports">
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">통계 및 보고서</h1>
+      <p class="text-sm text-gray-500 mt-1">기간, 물품, 차수, 업체를 조합해 납품 데이터를 분석합니다.</p>
+    </div>
+    <button
+      id="export-report-btn"
+      class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+    >
+      <i class="i-ph:download text-sm"></i>
+      <span>보고서 엑셀 내보내기</span>
+    </button>
+  </div>
+
+  <!-- 기간 필터 -->
+  <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
+    <div class="flex items-center gap-4">
+      <label class="text-sm font-medium text-gray-700">조회 기간</label>
+      <div class="flex gap-2">
+        <input
+          id="report-start-date"
+          type="date"
+          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+        />
+        <span class="text-gray-400 text-sm">~</span>
+        <input
+          id="report-end-date"
+          type="date"
+          class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+        />
+      </div>
+      <button
+        id="apply-report-filter"
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm text-sm"
+      >
+        조회
+      </button>
+      <span class="text-xs text-gray-400 ml-4">기간을 지정하지 않으면 전체 데이터를 조회합니다.</span>
+    </div>
+  </div>
+
+  <!-- 탭 네비게이션 -->
+  <div class="flex border-b border-gray-200 mb-6">
+    <button
+      id="tab-overall"
+      class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 bg-blue-50"
+      data-tab="overall"
+    >
+      전체 통계
+    </button>
+    <button
+      id="tab-product"
+      class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+      data-tab="product"
+    >
+      물품별 통계
+    </button>
+    <button
+      id="tab-round"
+      class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+      data-tab="round"
+    >
+      차수별 통계
+    </button>
+    <button
+      id="tab-vendor"
+      class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+      data-tab="vendor"
+    >
+      업체별 통계
+    </button>
+  </div>
+
+  <!-- 전체 통계 탭 -->
+  <div id="tab-overall-content" class="tab-panel space-y-6">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">전체 납품 실적 요약</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-6">
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <p class="text-xs font-semibold text-gray-400 uppercase">총 납품 건수</p>
+          <p id="overall-count" class="text-2xl font-bold text-gray-900 mt-1">0</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <p class="text-xs font-semibold text-gray-400 uppercase">총 수량</p>
+          <p id="overall-quantity" class="text-2xl font-bold text-gray-900 mt-1">0</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <p class="text-xs font-semibold text-gray-400 uppercase">총 매출</p>
+          <p id="overall-sale" class="text-2xl font-bold text-gray-900 mt-1">0 원</p>
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <p class="text-xs font-semibold text-gray-400 uppercase">가중 평균 마진율</p>
+          <p id="overall-margin-rate" class="text-2xl font-bold text-gray-900 mt-1">0%</p>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-400 uppercase">총 원가</p>
+            <p class="text-lg font-bold text-gray-900 mt-1" id="overall-cost">0 원</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-400 uppercase">총 배송료</p>
+            <p class="text-lg font-bold text-gray-900 mt-1" id="overall-fee">0 원</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-400 uppercase">총 마진금액</p>
+            <p class="text-lg font-bold text-gray-900 mt-1" id="overall-margin">0 원</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-400 uppercase">평균 건당 매출</p>
+            <p class="text-lg font-bold text-gray-900 mt-1" id="overall-avg-sale">0 원</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">기간별 매출·원가·마진 추이</h2>
+        <p class="text-sm text-gray-500 mt-1">월별 집계 데이터입니다.</p>
+      </div>
+      <div class="p-6" id="monthly-chart-container">
+        <div class="flex items-center justify-center h-64 text-gray-400">
+          데이터가 충분하지 않습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 물품별 통계 탭 -->
+  <div id="tab-product-content" class="tab-panel hidden space-y-6">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">물품별 납품 통계</h2>
+        <p class="text-sm text-gray-500 mt-1">마진율 평균은 가중 평균을 사용합니다.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-gray-200">
+            <tr>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">물품명</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">분류</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">납품 건수</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">총 수량</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">매출</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">원가</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">배송료</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">마진</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">가중 마진율</th>
+            </tr>
+          </thead>
+          <tbody id="product-stats-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 차수별 통계 탭 -->
+  <div id="tab-round-content" class="tab-panel hidden space-y-6">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">차수별 납품 통계</h2>
+        <p class="text-sm text-gray-500 mt-1">차수 간 실적을 비교할 수 있습니다.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-gray-200">
+            <tr>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">차수명</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">상태</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">납품 건수</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">총 수량</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">매출</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">원가</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">배송료</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">마진</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">가중 마진율</th>
+            </tr>
+          </thead>
+          <tbody id="round-stats-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 업체별 통계 탭 -->
+  <div id="tab-vendor-content" class="tab-panel hidden space-y-6">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="p-6 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">업체별 납품 통계</h2>
+        <p class="text-sm text-gray-500 mt-1">업체별 납품 실적과 마진율을 확인합니다.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-gray-200">
+            <tr>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase">업체명</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">담당자</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">납품 건수</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">총 수량</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">매출</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">원가</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">배송료</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-right">마진</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase text-center">가중 마진율</th>
+            </tr>
+          </thead>
+          <tbody id="vendor-stats-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // @ts-nocheck
+    import { DeliveryRepository, ProductRepository, VendorRepository, DeliveryRoundRepository } from '../../services/repositories/index.js';
+    import { formatMoney, formatNumber } from '../../lib/calculations/delivery.js';
+
+    const deliveryRepo = new DeliveryRepository();
+    const productRepo = new ProductRepository();
+    const vendorRepo = new VendorRepository();
+    const roundRepo = new DeliveryRoundRepository();
+
+    let deliveries = [];
+    let currentTab = 'overall';
+
+    const tabs = {
+      overall: { btn: document.getElementById('tab-overall'), content: document.getElementById('tab-overall-content') },
+      product: { btn: document.getElementById('tab-product'), content: document.getElementById('tab-product-content') },
+      round: { btn: document.getElementById('tab-round'), content: document.getElementById('tab-round-content') },
+      vendor: { btn: document.getElementById('tab-vendor'), content: document.getElementById('tab-vendor-content') },
+    };
+
+    function loadData() {
+      deliveries = deliveryRepo.getAll();
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const start = document.getElementById('report-start-date').value;
+      const end = document.getElementById('report-end-date').value;
+
+      let filtered = deliveries;
+      if (start) filtered = filtered.filter(d => d.requestedAt >= start);
+      if (end) filtered = filtered.filter(d => d.requestedAt <= end + 'T23:59:59.999Z');
+
+      renderOverall(filtered);
+      renderProductStats(filtered);
+      renderRoundStats(filtered);
+      renderVendorStats(filtered);
+    }
+
+    function renderOverall(data) {
+      const count = data.length;
+      const quantity = data.reduce((s, d) => s + d.quantity, 0);
+      const sale = data.reduce((s, d) => s + d.totalSalePrice, 0);
+      const cost = data.reduce((s, d) => s + d.totalCost, 0);
+      const fee = data.reduce((s, d) => s + d.deliveryFee, 0);
+      const margin = data.reduce((s, d) => s + d.marginAmount, 0);
+      const marginRate = sale > 0 ? (margin / sale) * 100 : 0;
+
+      document.getElementById('overall-count').textContent = count;
+      document.getElementById('overall-quantity').textContent = formatNumber(quantity);
+      document.getElementById('overall-sale').textContent = formatMoney(sale);
+      document.getElementById('overall-margin-rate').textContent = marginRate.toFixed(1) + '%';
+      document.getElementById('overall-cost').textContent = formatMoney(cost);
+      document.getElementById('overall-fee').textContent = formatMoney(fee);
+      document.getElementById('overall-margin').textContent = formatMoney(margin);
+      document.getElementById('overall-avg-sale').textContent = count > 0 ? formatMoney(sale / count) : '0 원';
+    }
+
+    function renderProductStats(data) {
+      const productMap = new Map();
+      data.forEach(d => {
+        if (!productMap.has(d.productId)) {
+          productMap.set(d.productId, {
+            name: d.productName,
+            category: d.category || '',
+            count: 0, quantity: 0, sale: 0, cost: 0, fee: 0, margin: 0,
+          });
+        }
+        const p = productMap.get(d.productId);
+        p.count += 1;
+        p.quantity += d.quantity;
+        p.sale += d.totalSalePrice;
+        p.cost += d.totalCost;
+        p.fee += d.deliveryFee;
+        p.margin += d.marginAmount;
+      });
+
+      const body = document.getElementById('product-stats-body');
+      body.innerHTML = '';
+      productMap.forEach((p, id) => {
+        const rate = p.sale > 0 ? (p.margin / p.sale) * 100 : 0;
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-100';
+        tr.innerHTML = `
+          <td class="px-6 py-3 text-sm text-gray-900 font-medium">${escapeHtml(p.name)}</td>
+          <td class="px-6 py-3 text-sm text-gray-600 text-center">${escapeHtml(p.category || '-')}</td>
+          <td class="px-6 py-3 text-sm text-center text-gray-600">${p.count}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatNumber(p.quantity)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(p.sale)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(p.cost)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(p.fee)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(p.margin)}</td>
+          <td class="px-6 py-3 text-sm text-center">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${rate >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+              ${rate.toFixed(1)}%
+            </span>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function renderRoundStats(data) {
+      const rounds = roundRepo.getAll();
+      const roundMap = new Map();
+      rounds.forEach(r => roundMap.set(r.id, { name: r.name, status: r.status }));
+      data.forEach(d => {
+        if (!d.roundId) return;
+        if (!roundMap.has(d.roundId)) {
+          roundMap.set(d.roundId, { name: '미분류', status: 'preparing' });
+        }
+        if (!roundMap.has(d.roundId + '_stats')) {
+          roundMap.set(d.roundId + '_stats', { count: 0, quantity: 0, sale: 0, cost: 0, fee: 0, margin: 0 });
+        }
+        const s = roundMap.get(d.roundId + '_stats');
+        s.count += 1;
+        s.quantity += d.quantity;
+        s.sale += d.totalSalePrice;
+        s.cost += d.totalCost;
+        s.fee += d.deliveryFee;
+        s.margin += d.marginAmount;
+      });
+
+      const body = document.getElementById('round-stats-body');
+      body.innerHTML = '';
+      roundMap.forEach((v, id) => {
+        if (id.endsWith('_stats')) return;
+        const stats = roundMap.get(id + '_stats') || { count: 0, quantity: 0, sale: 0, cost: 0, fee: 0, margin: 0 };
+        const rate = stats.sale > 0 ? (stats.margin / stats.sale) * 100 : 0;
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-100';
+        tr.innerHTML = `
+          <td class="px-6 py-3 text-sm text-gray-900 font-medium">${escapeHtml(v.name)}</td>
+          <td class="px-6 py-3 text-sm text-center">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              ${v.status}
+            </span>
+          </td>
+          <td class="px-6 py-3 text-sm text-center text-gray-600">${stats.count}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatNumber(stats.quantity)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.sale)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.cost)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.fee)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.margin)}</td>
+          <td class="px-6 py-3 text-sm text-center">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${rate >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+              ${rate.toFixed(1)}%
+            </span>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function renderVendorStats(data) {
+      const vendors = vendorRepo.getAll();
+      const vendorMap = new Map();
+      vendors.forEach(v => vendorMap.set(v.id, { name: v.name, person: v.person }));
+      data.forEach(d => {
+        if (!d.vendorId) return;
+        if (!vendorMap.has(d.vendorId + '_stats')) {
+          vendorMap.set(d.vendorId + '_stats', { count: 0, quantity: 0, sale: 0, cost: 0, fee: 0, margin: 0 });
+        }
+        const s = vendorMap.get(d.vendorId + '_stats');
+        s.count += 1;
+        s.quantity += d.quantity;
+        s.sale += d.totalSalePrice;
+        s.cost += d.totalCost;
+        s.fee += d.deliveryFee;
+        s.margin += d.marginAmount;
+      });
+
+      const body = document.getElementById('vendor-stats-body');
+      body.innerHTML = '';
+      vendorMap.forEach((v, id) => {
+        if (id.endsWith('_stats')) return;
+        const stats = vendorMap.get(id + '_stats') || { count: 0, quantity: 0, sale: 0, cost: 0, fee: 0, margin: 0 };
+        const rate = stats.sale > 0 ? (stats.margin / stats.sale) * 100 : 0;
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-100';
+        tr.innerHTML = `
+          <td class="px-6 py-3 text-sm text-gray-900 font-medium">${escapeHtml(v.name)}</td>
+          <td class="px-6 py-3 text-sm text-gray-600 text-center">${escapeHtml(v.person || '-')}</td>
+          <td class="px-6 py-3 text-sm text-center text-gray-600">${stats.count}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatNumber(stats.quantity)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.sale)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.cost)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.fee)}</td>
+          <td class="px-6 py-3 text-sm text-right text-gray-600">${formatMoney(stats.margin)}</td>
+          <td class="px-6 py-3 text-sm text-center">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${rate >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+              ${rate.toFixed(1)}%
+            </span>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      Object.values(tabs).forEach(t => {
+        t.btn.className = 'tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50';
+        t.content.classList.add('hidden');
+      });
+      tabs[tab].btn.className = 'tab-btn px-6 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 bg-blue-50';
+      tabs[tab].content.classList.remove('hidden');
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 이벤트 리스너
+    Object.entries(tabs).forEach(([tab, t]) => {
+      t.btn.addEventListener('click', () => switchTab(tab));
+    });
+
+    document.getElementById('apply-report-filter').addEventListener('click', applyFilter);
+    document.getElementById('export-report-btn').addEventListener('click', () => {
+      alert('엑셀 내보내기는 설정 페이지에서 이용할 수 있습니다.');
+    });
+
+    // 초기화
+    loadData();
+    switchTab('overall');
+  </script>
+</AppLayout>

@@ -1,0 +1,434 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+
+<AppLayout title="백업·내보내기 및 설정" currentPath="/settings">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">데이터 백업·내보내기 및 설정</h1>
+    <p class="text-sm text-gray-500 mb-8">시스템 데이터를 백업·복원하고, 엑셀 파일로 내보낼 수 있습니다.</p>
+
+    <!-- 저장 방식 정보 -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+      <h2 class="text-lg font-bold text-blue-900 mb-2">📦 데이터 저장 방식</h2>
+      <p class="text-sm text-blue-800 mb-3">
+        현재 시스템은 브라우저의 <strong>localStorage</strong>에 데이터를 저장합니다.
+      </p>
+      <ul class="text-sm text-blue-700 space-y-1 mb-4">
+        <li>• 새 도구/기기에서 접속하면 데이터가 연동되지 않을 수 있습니다.</li>
+        <li>• 브라우저 캐시 삭제 시 데이터가 삭제될 수 있습니다.</li>
+        <li>• 정기적으로 <strong>데이터 백업</strong> 기능을 통해 JSON 파일을 다운로드해 보관하세요.</li>
+      </ul>
+      <p class="text-xs text-blue-600">
+        향후 데이터베이스 연동 시 이 저장 방식을 교체할 수 있도록 저장소 계층이 분리되어 있습니다.
+      </p>
+    </div>
+
+    <!-- 엑셀 내보내기 -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">📥 엑셀 내보내기 (.xlsx)</h2>
+      <p class="text-sm text-gray-600 mb-4">저장된 데이터를 엑셀 파일로 다운로드합니다.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button
+          id="export-deliveries"
+          class="px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between group"
+        >
+          <span>납품 내역</span>
+          <i class="i-ph:download text-xs group-hover:text-blue-600"></i>
+        </button>
+        <button
+          id="export-vendors"
+          class="px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between group"
+        >
+          <span>업체 목록</span>
+          <i class="i-ph:download text-xs group-hover:text-blue-600"></i>
+        </button>
+        <button
+          id="export-products"
+          class="px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between group"
+        >
+          <span>광고 물품</span>
+          <i class="i-ph:download text-xs group-hover:text-blue-600"></i>
+        </button>
+        <button
+          id="export-rounds"
+          class="px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-between group"
+        >
+          <span>납품 차수</span>
+          <i class="i-ph:download text-xs group-hover:text-blue-600"></i>
+        </button>
+        <button
+          id="export-all"
+          class="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center justify-between"
+        >
+          <span>전체 데이터 (통합)</span>
+          <i class="i-ph:download text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 데이터 백업 -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">💾 데이터 백업</h2>
+      <p class="text-sm text-gray-600 mb-4">모든 데이터를 하나의 JSON 파일로 백업합니다.</p>
+      <div class="flex gap-3">
+        <button
+          id="backup-data"
+          class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2"
+        >
+          <i class="i-ph:save text-sm"></i>
+          <span>백업 파일 다운로드</span>
+        </button>
+        <p class="text-sm text-gray-500 self-center">확장자: .json</p>
+      </div>
+    </div>
+
+    <!-- 데이터 복원 -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">📤 데이터 복원</h2>
+      <p class="text-sm text-gray-600 mb-4">백업된 JSON 파일을 업로드하여 데이터를 복원합니다.</p>
+      <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-4">
+        <div class="flex items-center gap-3">
+          <input
+            id="restore-file"
+            type="file"
+            accept=".json"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+        </div>
+        <p class="text-xs text-gray-500 mt-2">
+          복원 시 기존 데이터가 완전히 덮어쓰기됩니다. 신중하게 진행하세요.
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <button
+          id="restore-data"
+          class="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
+        >
+          <i class="i-ph:arrow-clockwise text-sm"></i>
+          <span>복원 실행</span>
+        </button>
+        <button
+          id="cancel-restore"
+          class="px-6 py-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors"
+        >
+          취소
+        </button>
+      </div>
+    </div>
+
+    <!-- 초기 데이터 -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <h2 class="text-lg font-bold text-gray-900 mb-4">🚀 시작하기</h2>
+      <p class="text-sm text-gray-600 mb-4">처음 사용하는 경우 샘플 데이터를 입력해 시스템을 체험해 볼 수 있습니다.</p>
+      <div class="flex gap-3">
+        <button
+          id="load-sample"
+          class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+        >
+          <i class="i-ph:flask text-sm"></i>
+          <span>샘플 데이터 로드</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // @ts-nocheck
+    import { DeliveryRepository, ProductRepository, VendorRepository, DeliveryRoundRepository } from '../../services/repositories/index.js';
+    import * as XLSX from 'xlsx';
+    import { loadFromLocalStorage, saveToLocalStorage, STORAGE_KEYS, exportAllData, importAllData } from '../../lib/storage.js';
+    import { formatDate } from '../../lib/utils/index.js';
+
+    const deliveryRepo = new DeliveryRepository();
+    const productRepo = new ProductRepository();
+    const vendorRepo = new VendorRepository();
+    const roundRepo = new DeliveryRoundRepository();
+
+    let restoreFile = null;
+
+    // 엑셀 내보내기
+    function exportToExcel(filename, sheetName, columns, data) {
+      const wb = XLSX.utils.book_new();
+      const wsData = [columns, ...data.map(row => columns.map(col => row[col]))];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // 열 너비 자동 조정
+      const colWidths = columns.map((_, i) => {
+        const maxLen = Math.max(
+          String(columns[i] || '').length,
+          ...data.map(row => String(row[columns[i]] || '').length)
+        );
+        return { wch: Math.min(maxLen + 2, 50) };
+      });
+      ws['!cols'] = colWidths;
+
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      XLSX.writeFile(wb, filename);
+    }
+
+    function getCurrentDateStr() {
+      const now = new Date();
+      return now.toISOString().split('T')[0];
+    }
+
+    document.getElementById('export-deliveries').addEventListener('click', () => {
+      const data = deliveryRepo.getAll();
+      const columns = ['요청일자', '물품명', '차수', '공급 업체', '수량', '개당 원가', '총원가', '배송료', '개당 단가', '총 납품금액', '마진금액', '마진율', '비고'];
+      const rows = data.map(d => ({
+        '요청일자': formatDate(d.requestedAt),
+        '물품명': d.productName,
+        '차수': d.roundId ? roundRepo.getById(d.roundId)?.name || '' : '',
+        '공급 업체': d.vendorName,
+        '수량': d.quantity,
+        '개당 원가': d.unitPrice,
+        '총원가': d.totalCost,
+        '배송료': d.deliveryFee,
+        '개당 단가': d.unitSalePrice,
+        '총 납품금액': d.totalSalePrice,
+        '마진금액': d.marginAmount,
+        '마진율': d.marginRate !== null ? d.marginRate.toFixed(1) + '%' : '계산 불가',
+        '비고': d.note || '',
+      }));
+      exportToExcel(`보베라_납품내역_${getCurrentDateStr()}.xlsx`, '납품 내역', columns, rows);
+    });
+
+    document.getElementById('export-vendors').addEventListener('click', () => {
+      const data = vendorRepo.getAll();
+      const columns = ['업체명', '담당자', '연락처', '주소', '이메일', '비고', '등록일', '수정일'];
+      const rows = data.map(v => ({
+        '업체명': v.name,
+        '담당자': v.person,
+        '연락처': v.phone,
+        '주소': v.address || '',
+        '이메일': v.email || '',
+        '비고': v.note || '',
+        '등록일': formatDate(v.createdAt),
+        '수정일': formatDate(v.updatedAt),
+      }));
+      exportToExcel(`보베라_업체목록_${getCurrentDateStr()}.xlsx`, '업체 목록', columns, rows);
+    });
+
+    document.getElementById('export-products').addEventListener('click', () => {
+      const data = productRepo.getAll();
+      const columns = ['물품명', '분류', '규격', '단위', '설명', '사용 여부', '등록일', '수정일'];
+      const rows = data.map(p => ({
+        '물품명': p.name,
+        '분류': p.category,
+        '규격': p.spec || '',
+        '단위': p.unit,
+        '설명': p.description || '',
+        '사용 여부': p.isActive ? '사용 중' : '미사용',
+        '등록일': formatDate(p.createdAt),
+        '수정일': formatDate(p.updatedAt),
+      }));
+      exportToExcel(`보베라_광고물품_${getCurrentDateStr()}.xlsx`, '광고 물품', columns, rows);
+    });
+
+    document.getElementById('export-rounds').addEventListener('click', () => {
+      const data = roundRepo.getAll();
+      const columns = ['차수명', '납품 기간', '상태', '설명', '등록일', '수정일'];
+      const rows = data.map(r => ({
+        '차수명': r.name,
+        '납품 기간': r.period || '',
+        '상태': r.status,
+        '설명': r.description || '',
+        '등록일': formatDate(r.createdAt),
+        '수정일': formatDate(r.updatedAt),
+      }));
+      exportToExcel(`보베라_납품차수_${getCurrentDateStr()}.xlsx`, '납품 차수', columns, rows);
+    });
+
+    document.getElementById('export-all').addEventListener('click', () => {
+      const wb = XLSX.utils.book_new();
+
+      // 납품 내역
+      const deliveries = deliveryRepo.getAll();
+      const delRows = deliveries.map(d => ({
+        '요청일자': formatDate(d.requestedAt),
+        '물품명': d.productName,
+        '차수': d.roundId ? roundRepo.getById(d.roundId)?.name || '' : '',
+        '공급 업체': d.vendorName,
+        '수량': d.quantity,
+        '개당 원가': d.unitPrice,
+        '총원가': d.totalCost,
+        '배송료': d.deliveryFee,
+        '개당 단가': d.unitSalePrice,
+        '총 납품금액': d.totalSalePrice,
+        '마진금액': d.marginAmount,
+        '마진율': d.marginRate !== null ? d.marginRate.toFixed(1) + '%' : '계산 불가',
+        '비고': d.note || '',
+      }));
+      const delWs = XLSX.utils.json_to_sheet(delRows);
+      XLSX.utils.book_append_sheet(wb, delWs, '납품 내역');
+
+      // 업체 목록
+      const vendors = vendorRepo.getAll();
+      const venRows = vendors.map(v => ({
+        '업체명': v.name,
+        '담당자': v.person,
+        '연락처': v.phone,
+        '주소': v.address || '',
+        '이메일': v.email || '',
+        '비고': v.note || '',
+      }));
+      const venWs = XLSX.utils.json_to_sheet(venRows);
+      XLSX.utils.book_append_sheet(wb, venWs, '업체 목록');
+
+      // 광고 물품
+      const products = productRepo.getAll();
+      const prodRows = products.map(p => ({
+        '물품명': p.name,
+        '분류': p.category,
+        '규격': p.spec || '',
+        '단위': p.unit,
+        '사용 여부': p.isActive ? '사용 중' : '미사용',
+      }));
+      const prodWs = XLSX.utils.json_to_sheet(prodRows);
+      XLSX.utils.book_append_sheet(wb, prodWs, '광고 물품');
+
+      // 납품 차수
+      const rounds = roundRepo.getAll();
+      const roundRows = rounds.map(r => ({
+        '차수명': r.name,
+        '상태': r.status,
+        '납품 기간': r.period || '',
+        '설명': r.description || '',
+      }));
+      const roundWs = XLSX.utils.json_to_sheet(roundRows);
+      XLSX.utils.book_append_sheet(wb, roundWs, '납품 차수');
+
+      XLSX.writeFile(wb, `보베라_전체데이터_${getCurrentDateStr()}.xlsx`);
+    });
+
+    // 데이터 백업
+    document.getElementById('backup-data').addEventListener('click', () => {
+      const allData = exportAllData();
+      const dataStr = JSON.stringify(allData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `보베라_데이터백업_${getCurrentDateStr()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // 데이터 복원
+    const fileInput = document.getElementById('restore-file');
+    const restoreBtn = document.getElementById('restore-data');
+    const cancelBtn = document.getElementById('cancel-restore');
+
+    fileInput.addEventListener('change', (e) => {
+      restoreFile = e.target.files[0];
+      restoreBtn.disabled = !restoreFile;
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      restoreFile = null;
+      restoreBtn.disabled = true;
+    });
+
+    restoreBtn.addEventListener('click', () => {
+      if (!restoreFile) return;
+      if (!confirm('기존 모든 데이터가 덮어쓰기됩니다. 정말 복원하시겠습니까?')) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          importAllData(data);
+          alert('데이터 복원이 완료되었습니다. 페이지를 새로고침합니다.');
+          window.location.reload();
+        } catch (err) {
+          alert('올바른 백업 파일이 아닙니다.');
+        }
+      };
+      reader.readAsText(restoreFile);
+    });
+
+    // 샘플 데이터 로드
+    document.getElementById('load-sample').addEventListener('click', () => {
+      if (!confirm('샘플 데이터를 로드하면 기존 데이터에 추가됩니다. 계속하시겠습니까?')) return;
+
+      const now = new Date().toISOString();
+
+      // 샘플 물품
+      const sampleProducts = [
+        { name: '현수막 출력', category: '출력물', spec: '1m x 2m', unit: '개', description: '실사 출력 현수막', isActive: true },
+        { name: '입간판', category: '시설물', spec: 'A자형', unit: '개', description: '야외용 입간판', isActive: true },
+        { name: '명함', category: '인쇄물', spec: '90x50mm', unit: '박스', description: '양면 컬러 명함', isActive: true },
+      ];
+      sampleProducts.forEach(p => productRepo.create(p));
+
+      // 샘플 업체
+      const sampleVendors = [
+        { name: '광고프린팅', person: '김대표', phone: '02-1234-5678', address: '서울 강남구', email: 'rep@print.com', note: '출력 전문' },
+        { name: '인쇄마트', person: '이실장', phone: '031-987-6543', address: '경기도 성남시', email: '', note: '인쇄 전문' },
+      ];
+      sampleVendors.forEach(v => vendorRepo.create(v));
+
+      // 샘플 차수
+      const sampleRounds = [
+        { name: '1차 납품', period: '2026-01 ~ 2026-03', status: 'completed', description: '1분기 납품 차수' },
+        { name: '2차 납품', period: '2026-04 ~ 2026-06', status: 'in_progress', description: '2분기 납품 차수' },
+      ];
+      sampleRounds.forEach(r => roundRepo.create(r));
+
+      // 샘플 납품
+      const products = productRepo.getAll();
+      const vendors = vendorRepo.getAll();
+      const rounds = roundRepo.getAll();
+
+      const sampleDeliveries = [
+        {
+          productId: products[0]?.id, roundId: rounds[0]?.id, vendorId: vendors[0]?.id,
+          productName: products[0]?.name, vendorName: vendors[0]?.name,
+          vendorPerson: vendors[0]?.person, vendorPhone: vendors[0]?.phone,
+          requestedAt: '2026-01-10', arrivedAt: '2026-01-12',
+          quantity: 10, unitPrice: 50000, deliveryFee: 5000, unitSalePrice: 70000,
+          note: '첫 번째 납품',
+        },
+        {
+          productId: products[1]?.id, roundId: rounds[0]?.id, vendorId: vendors[1]?.id,
+          productName: products[1]?.name, vendorName: vendors[1]?.name,
+          vendorPerson: vendors[1]?.person, vendorPhone: vendors[1]?.phone,
+          requestedAt: '2026-02-05', arrivedAt: '2026-02-07',
+          quantity: 5, unitPrice: 120000, deliveryFee: 10000, unitSalePrice: 150000,
+          note: '긴급 납품',
+        },
+        {
+          productId: products[2]?.id, roundId: rounds[1]?.id, vendorId: vendors[0]?.id,
+          productName: products[2]?.name, vendorName: vendors[0]?.name,
+          vendorPerson: vendors[0]?.person, vendorPhone: vendors[0]?.phone,
+          requestedAt: '2026-04-01', arrivedAt: '',
+          quantity: 20, unitPrice: 15000, deliveryFee: 3000, unitSalePrice: 22000,
+          note: '정기 납품',
+        },
+      ];
+
+      sampleDeliveries.forEach(d => {
+        const calc = {
+          totalCost: d.quantity * d.unitPrice,
+          totalSalePrice: d.quantity * d.unitSalePrice,
+          deliveryFee: d.deliveryFee,
+          marginAmount: d.quantity * d.unitSalePrice - d.quantity * d.unitPrice - d.deliveryFee,
+          marginRate: 0,
+        };
+        calc.marginRate = d.quantity * d.unitSalePrice > 0 ? (calc.marginAmount / (d.quantity * d.unitSalePrice)) * 100 : 0;
+
+        deliveryRepo.create({
+          ...d,
+          totalCost: calc.totalCost,
+          totalSalePrice: calc.totalSalePrice,
+          marginAmount: calc.marginAmount,
+          marginRate: calc.marginRate,
+        });
+      });
+
+      alert('샘플 데이터가 로드되었습니다.');
+      window.location.reload();
+    });
+  </script>
+</AppLayout>
